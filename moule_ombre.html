@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quiz Ombre Anime</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Komika+Axis&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; font-family: 'Komika Axis', sans-serif; overflow: hidden; color: #000; position: relative; }
+        body::before { content: ""; position: absolute; top: 50%; left: 50%; width: 200vmax; height: 200vmax; background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.03) 0deg 2deg, transparent 2deg 4deg); transform: translate(-50%, -50%); pointer-events: none; z-index: 0; animation: spinAction 60s linear infinite; }
+        @keyframes spinAction { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        .app-container { width: 100%; max-width: 500px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; position: relative; z-index: 1; padding: 12px; }
+        .header { width: 100%; text-align: center; margin-top: 5px; flex-shrink: 0; }
+        .logo-top { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #ffcc00; object-fit: cover; margin-bottom: 5px; }
+        .title { font-family: 'Bangers', cursive; font-size: 38px; color: #ffcc00; -webkit-text-stroke: 1.5px #000; text-shadow: 3px 3px 0 #d60000; letter-spacing: 1px; transform: rotate(-2deg); line-height: 1; }
+        .diff-badge { display: inline-block; padding: 5px 15px; background: #fff; border: 3px solid #000; font-size: 14px; font-weight: bold; box-shadow: 3px 3px 0 #000; transform: skew(-10deg); margin-top: 8px; }
+
+        .image-area-wrapper { width: 100%; flex: 1; display: flex; justify-content: center; align-items: center; margin: 10px 0; position: relative; }
+        .image-area { position: relative; width: 100%; aspect-ratio: 1/1; max-height: 390px; max-width: 390px; border: 5px solid #fff; border-radius: 20px; box-shadow: 0 0 30px rgba(255, 204, 0, 0.2), 8px 8px 0 #000; overflow: hidden; background: radial-gradient(circle, #ffffff 0%, #87ceeb 100%); display: flex; justify-content: center; align-items: center; }
+        canvas { width: 100%; height: 100%; object-fit: contain; }
+        .pop-effect { animation: popIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { transform: scale(0.8); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+        .timer-wrapper { width: 90%; margin-bottom: 10px; flex-shrink: 0; }
+        .timer-container { width: 100%; height: 28px; background: #333; border: 3px solid #fff; box-shadow: 4px 4px 0 #000; transform: skew(-10deg); overflow: hidden; }
+        .timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #4eff3b 0%, #ffe600 50%, #ff0000 100%); transform-origin: left; }
+        .animate-timer { animation: shrink linear forwards; }
+        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
+
+        .answer-zone { height: 115px; width: 100%; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; flex-shrink: 0; }
+        .char-name { font-family: 'Bangers', cursive; font-size: 42px; color: #ffe600; -webkit-text-stroke: 2px #000; text-shadow: 4px 4px 0 #000; opacity: 0; transform: scale(0.5); transition: 0.35s; line-height: 1.1; }
+        .visible { opacity: 1 !important; transform: scale(1) !important; }
+        .counter { position: absolute; bottom: 8px; right: 12px; font-size: 22px; color: #fff; text-shadow: 2px 2px 0 #000; font-family: 'Bangers', cursive; z-index: 20; }
+
+        /* INTRO 1s & FIN */
+        .overlay { position: absolute; inset: 0; background: linear-gradient(135deg, #0f0c29 0%, #302b63 100%); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        #flyingIconsContainer { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+        .flying-particle { position: absolute; top: 50%; left: 50%; object-fit: contain; opacity: 0; }
+        @keyframes explodeOut { 0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; } 100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.3); opacity: 0; } }
+        .intro-logo-heartbeat { width: 210px; height: 210px; border-radius: 50%; object-fit: cover; border: 6px solid #000; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 10; animation: heartbeat 0.85s ease-in-out infinite; }
+        @keyframes heartbeat { 0% { transform: scale(0.85); } 30% { transform: scale(1.15); } 60% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
+        .intro-fade-out { opacity: 0; transition: opacity 0.15s ease-out; pointer-events: none; }
+        .end-box { background: #ffe600; color: #000; border: 5px solid #000; box-shadow: 8px 8px 0 #d60000; padding: 25px; border-radius: 15px; transform: rotate(-2deg); margin-top: 25px; width: 90%; font-family: 'Bangers', cursive; font-size: 34px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="logo-top" alt="Logo">
+            <div class="title">QUI EST CE PERSONNAGE ?</div>
+            <div id="diffBadge" class="diff-badge">FACILE</div>
+        </div>
+
+        <div class="image-area-wrapper">
+            <div class="image-area"><canvas id="gameCanvas"></canvas></div>
+        </div>
+
+        <div class="timer-wrapper"><div class="timer-container"><div class="timer-bar" id="timerBar"></div></div></div>
+        <div class="answer-zone"><div class="char-name" id="charName">???</div></div>
+        <div class="counter" id="counter">1 / 8</div>
+
+        <div class="overlay" id="introOverlay">
+            <div id="flyingIconsContainer"></div>
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" alt="Logo">
+        </div>
+
+        <div class="overlay" id="endScreen" style="display:none; background: rgba(15,12,41,0.96);">
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" style="width:160px;height:160px;" alt="Logo">
+            <div class="end-box">DONNE TON SCORE EN COMMENTAIRE ! 👇</div>
+        </div>
+    </div>
+
+    <script>
+        const database = __DONNEES_IA__;
+        const TIMER_DURATION = 3400;
+        const WAIT_AFTER_REVEAL = 1800;
+        const daIcons = [
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-2.png",
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-3.png",
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-4.png"
+        ];
+
+        let currentIdx = 0, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d'), currentImgObj = new Image();
+
+        window.onload = () => {
+            const container = document.getElementById('flyingIconsContainer');
+            for (let i = 0; i < 16; i++) {
+                const img = document.createElement('img');
+                img.src = daIcons[i % daIcons.length];
+                img.className = 'flying-particle';
+                img.style.setProperty('--tx', (Math.random() - 0.5) * 800 + 'px');
+                img.style.setProperty('--ty', (Math.random() - 0.5) * 1000 + 'px');
+                img.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+                img.style.width = '50px';
+                img.style.animation = 'explodeOut 0.95s ease-out forwards';
+                container.appendChild(img);
+            }
+            setTimeout(() => {
+                const intro = document.getElementById('introOverlay');
+                intro.classList.add('intro-fade-out');
+                setTimeout(() => { intro.style.display = 'none'; loadLevel(0); }, 150);
+            }, 850);
+        };
+
+        function loadLevel(index) {
+            if (index >= database.length) {
+                document.getElementById('endScreen').style.display = 'flex';
+                return;
+            }
+            currentIdx = index;
+            let data = database[index];
+            let nameEl = document.getElementById('charName');
+            nameEl.classList.remove('visible');
+            canvas.classList.remove('pop-effect');
+            document.getElementById('counter').innerText = (index + 1) + " / " + database.length;
+
+            let badge = document.getElementById('diffBadge');
+            badge.innerText = data.level || "NORMAL";
+            badge.style.borderColor = data.color || "#4eff3b";
+
+            let bar = document.getElementById('timerBar');
+            bar.classList.remove('animate-timer');
+            void bar.offsetWidth;
+            bar.style.animationDuration = (TIMER_DURATION / 1000) + "s";
+
+            currentImgObj = new Image();
+            currentImgObj.crossOrigin = "Anonymous";
+            currentImgObj.src = "https://wsrv.nl/?url=" + encodeURIComponent(data.imgUrl) + "&output=png";
+            currentImgObj.onload = () => {
+                canvas.width = 500; canvas.height = 500;
+                drawShadow(currentImgObj);
+                bar.classList.add('animate-timer');
+                setTimeout(() => revealCharacter(data), TIMER_DURATION);
+            };
+        }
+
+        function drawShadow(img) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.88;
+            let x = (canvas.width - img.width * scale) / 2;
+            let y = (canvas.height - img.height * scale) / 2;
+            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+            ctx.globalCompositeOperation = 'source-in';
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        function revealCharacter(data) {
+            let nameEl = document.getElementById('charName');
+            if (data.isBait) {
+                nameEl.style.fontSize = "28px";
+                nameEl.innerHTML = "ÉCRIS LE PERSONNAGE EN COMMENTAIRE ! 👇";
+                nameEl.classList.add('visible');
+            } else {
+                nameEl.style.fontSize = "42px";
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let scale = Math.min(canvas.width / currentImgObj.width, canvas.height / currentImgObj.height) * 0.88;
+                let x = (canvas.width - currentImgObj.width * scale) / 2;
+                let y = (canvas.height - currentImgObj.height * scale) / 2;
+                ctx.drawImage(currentImgObj, x, y, currentImgObj.width * scale, currentImgObj.height * scale);
+                canvas.classList.add('pop-effect');
+                nameEl.innerText = data.name;
+                nameEl.classList.add('visible');
+            }
+            setTimeout(() => loadLevel(currentIdx + 1), WAIT_AFTER_REVEAL);
+        }
+    </script>
+</body>
+</html>

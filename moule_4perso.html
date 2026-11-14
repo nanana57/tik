@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>4 Persos = 1 Anime</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: #ff9800; font-family: 'Montserrat', sans-serif; font-weight: 900; height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; }
+        body::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; z-index: -2; background: repeating-conic-gradient(from 0deg at 50% 50%, #ffffff 0deg, #ffffff 15deg, #ffb74d 30deg, #fb8c00 45deg, #ffb74d 60deg, #ffffff 75deg, #ffffff 90deg); animation: spinBackground 20s linear infinite; }
+        body::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.18); z-index: -1; }
+        @keyframes spinBackground { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .app-container { width: 100%; max-width: 500px; height: 100%; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+        .screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; z-index: 20; padding: 15px; }
+        .hidden { display: none !important; }
+        .logo-top { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #000; object-fit: cover; margin-bottom: 5px; }
+        .global-quiz-header { font-family: 'Bangers', cursive; font-size: 28px; color: #fff; -webkit-text-stroke: 1.5px #000; text-shadow: 3px 3px 0 #000; margin-bottom: 4px; }
+        .level-counter-small { font-size: 15px; color: #ffea00; margin-bottom: 6px; text-shadow: 1px 1px 0 #000; }
+        .progress-bg { width: 100%; height: 16px; background: rgba(0,0,0,0.6); border-radius: 12px; padding: 2px; border: 2px solid #fff; margin-bottom: 15px; }
+        .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #ffea00, #ffc107); border-radius: 8px; }
+
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12px; width: 100%; flex-grow: 1; max-height: 640px; margin-bottom: 10px; perspective: 1000px; }
+        .card-wrapper { position: relative; width: 100%; height: 100%; }
+        .card-letter { font-family: 'Bangers', cursive; font-size: 24px; background: #ffea00; color: #000; border: 2px solid #000; width: 38px; height: 38px; display: flex; justify-content: center; align-items: center; border-radius: 50%; position: absolute; top: -8px; left: -8px; z-index: 30; box-shadow: 2px 2px 0 #000; }
+        .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; border-radius: 15px; box-shadow: 0 8px 15px rgba(0,0,0,0.5); }
+        .card.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 15px; border: 4px solid #000; display: flex; justify-content: center; align-items: center; overflow: hidden; background: #222; }
+        .otaku { background: linear-gradient(135deg, #00c6ff, #0072ff); }
+        .epic { background: linear-gradient(135deg, #f7971e, #ffd200); }
+        .medium { background: linear-gradient(135deg, #ff512f, #dd2476); }
+        .novice { background: linear-gradient(135deg, #8e2de2, #4a00e0); }
+        .role-name { font-family: 'Bangers', cursive; font-size: 28px; color: #fff; -webkit-text-stroke: 1.2px black; display: block; text-align: center; }
+        .pt-val { font-size: 14px; color: #fff; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 8px; margin-top: 4px; display: inline-block; }
+        .card-back { transform: rotateY(180deg); background: #111; position: relative; }
+        .card-img { width: 100%; height: 100%; object-fit: contain; }
+        .back-pt-badge { position: absolute; bottom: 8px; right: 8px; background: #ffea00; color: #000; font-family: 'Bangers', cursive; font-size: 18px; padding: 2px 8px; border: 2px solid #000; border-radius: 8px; }
+
+        #revealScreen { justify-content: center; z-index: 30; }
+        .reveal-img-container { width: 90%; aspect-ratio: 1/1; background: #111; border: 5px solid #fff; border-radius: 20px; overflow: hidden; display: flex; justify-content: center; align-items: center; box-shadow: 0 15px 30px rgba(0,0,0,0.8); transform: rotate(-2deg); }
+        .reveal-img { width: 100%; height: 100%; object-fit: contain; }
+        .impact-title { font-family: 'Bangers', cursive; color: #fff; -webkit-text-stroke: 2px black; text-shadow: 4px 4px 0 #000; text-align: center; font-size: 44px; margin-top: 20px; }
+
+        /* INTRO 1s & FIN */
+        .overlay { position: absolute; inset: 0; background: linear-gradient(135deg, #fb8c00 0%, #d60000 100%); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        #flyingIconsContainer { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+        .flying-particle { position: absolute; top: 50%; left: 50%; object-fit: contain; opacity: 0; }
+        @keyframes explodeOut { 0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; } 100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.3); opacity: 0; } }
+        .intro-logo-heartbeat { width: 210px; height: 210px; border-radius: 50%; object-fit: cover; border: 6px solid #000; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 10; animation: heartbeat 0.85s ease-in-out infinite; }
+        @keyframes heartbeat { 0% { transform: scale(0.85); } 30% { transform: scale(1.15); } 60% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
+        .intro-fade-out { opacity: 0; transition: opacity 0.15s ease-out; pointer-events: none; }
+        .end-box { background: #ffea00; color: #000; border: 5px solid #000; box-shadow: 8px 8px 0 #000; padding: 25px; border-radius: 15px; transform: rotate(-2deg); margin-top: 25px; width: 90%; font-family: 'Bangers', cursive; font-size: 34px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="gameScreen" class="screen">
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="logo-top" alt="Logo">
+            <div class="global-quiz-header">4 PERSOS = 1 ANIME</div>
+            <div class="level-counter-small" id="levelCounter">1 / 4</div>
+            <div class="progress-bg"><div class="progress-fill" id="timerBar"></div></div>
+
+            <div class="grid-container">
+                <div class="card-wrapper"><div class="card-letter">A</div><div class="card" id="card1"><div class="card-face card-front otaku"><div><span class="role-name">EXPERT</span><span class="pt-val">+4 PTS</span></div></div><div class="card-face card-back"><img class="card-img" src=""><div class="back-pt-badge">+4 PTS</div></div></div></div>
+                <div class="card-wrapper"><div class="card-letter">B</div><div class="card" id="card2"><div class="card-face card-front epic"><div><span class="role-name">DIFFICILE</span><span class="pt-val">+3 PTS</span></div></div><div class="card-face card-back"><img class="card-img" src=""><div class="back-pt-badge">+3 PTS</div></div></div></div>
+                <div class="card-wrapper"><div class="card-letter">C</div><div class="card" id="card3"><div class="card-face card-front medium"><div><span class="role-name">MOYEN</span><span class="pt-val">+2 PTS</span></div></div><div class="card-face card-back"><img class="card-img" src=""><div class="back-pt-badge">+2 PTS</div></div></div></div>
+                <div class="card-wrapper"><div class="card-letter">D</div><div class="card" id="card4"><div class="card-face card-front novice"><div><span class="role-name">FACILE</span><span class="pt-val">+1 PT</span></div></div><div class="card-face card-back"><img class="card-img" src=""><div class="back-pt-badge">+1 PT</div></div></div></div>
+            </div>
+        </div>
+
+        <div id="revealScreen" class="screen hidden">
+            <div class="reveal-img-container"><img id="revealImage" class="reveal-img" src=""></div>
+            <div class="impact-title" id="animeTitle">TITRE</div>
+        </div>
+
+        <div class="overlay" id="introOverlay">
+            <div id="flyingIconsContainer"></div>
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" alt="Logo">
+        </div>
+
+        <div class="overlay" id="endScreen" style="display:none; background: rgba(0,0,0,0.95);">
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" style="width:160px;height:160px;" alt="Logo">
+            <div class="end-box">DONNE TON SCORE EN COMMENTAIRE ! 👇</div>
+        </div>
+    </div>
+
+    <script>
+        const database = __DONNEES_IA__;
+        const TOTAL_LEVEL_MS = 6400;
+        const REVEAL_DURATION_MS = 1800;
+        const daIcons = [
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-2.png",
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-3.png",
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-4.png"
+        ];
+        let currentIdx = 0;
+        const cards = [document.getElementById('card1'), document.getElementById('card2'), document.getElementById('card3'), document.getElementById('card4')];
+
+        window.onload = () => {
+            const container = document.getElementById('flyingIconsContainer');
+            for (let i = 0; i < 16; i++) {
+                const img = document.createElement('img');
+                img.src = daIcons[i % daIcons.length];
+                img.className = 'flying-particle';
+                img.style.setProperty('--tx', (Math.random() - 0.5) * 800 + 'px');
+                img.style.setProperty('--ty', (Math.random() - 0.5) * 1000 + 'px');
+                img.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+                img.style.width = '50px';
+                img.style.animation = 'explodeOut 0.95s ease-out forwards';
+                container.appendChild(img);
+            }
+            setTimeout(() => {
+                const intro = document.getElementById('introOverlay');
+                intro.classList.add('intro-fade-out');
+                setTimeout(() => { intro.style.display = 'none'; playLevel(); }, 150);
+            }, 850);
+        };
+
+        function playLevel() {
+            if (currentIdx >= database.length) {
+                document.getElementById('endScreen').style.display = 'flex';
+                return;
+            }
+            const data = database[currentIdx];
+            document.getElementById('revealScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('levelCounter').innerText = `${currentIdx + 1} / ${database.length}`;
+            const bar = document.getElementById('timerBar');
+            bar.style.transition = 'none'; bar.style.width = '100%';
+
+            const imgs = data.charImgs || [data.imgUrl, data.imgUrl, data.imgUrl, data.imgUrl];
+            cards.forEach((card, i) => {
+                card.classList.remove('flipped');
+                card.querySelector('.card-img').src = imgs[i] || data.imgUrl;
+            });
+
+            setTimeout(() => {
+                bar.style.transition = `width ${TOTAL_LEVEL_MS / 1000}s linear`;
+                bar.style.width = '0%';
+            }, 50);
+
+            [100, 1600, 3200, 4800].forEach((delay, idx) => {
+                setTimeout(() => cards[idx].classList.add('flipped'), delay);
+            });
+            setTimeout(() => showReveal(data), TOTAL_LEVEL_MS);
+        }
+
+        function showReveal(data) {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('revealScreen').classList.remove('hidden');
+            document.getElementById('animeTitle').innerText = data.isBait ? "ÉCRIS L'ANIME EN COMMENTAIRE ! 👇" : (data.anime || data.name);
+            document.getElementById('revealImage').src = data.imgUrl;
+            setTimeout(() => { currentIdx++; playLevel(); }, REVEAL_DURATION_MS);
+        }
+    </script>
+</body>
+</html>

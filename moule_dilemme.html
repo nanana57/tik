@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dilemme Anime</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Komika+Axis&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: #111; height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; font-family: 'Komika Axis', sans-serif; overflow: hidden; color: #fff; position: relative; }
+        body::before { content: ""; position: absolute; top: 50%; left: 50%; width: 200vmax; height: 200vmax; background: repeating-conic-gradient(from 0deg, #0044aa 0deg 30deg, #002266 30deg 60deg, #aa0000 60deg 90deg, #660000 90deg 120deg); transform: translate(-50%, -50%); pointer-events: none; z-index: -2; animation: spinBG 20s linear infinite; filter: blur(2px); }
+        body::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 40%, #000 100%); pointer-events: none; z-index: -1; }
+        @keyframes spinBG { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        #gameContainer { z-index: 1; display: flex; flex-direction: column; width: 100%; height: 100%; max-width: 550px; padding: 15px; }
+        .header-zone { text-align: center; margin-bottom: 10px; flex-shrink: 0; }
+        .mini-logo { width: 75px; height: 75px; border-radius: 50%; border: 3px solid #000; object-fit: cover; margin-bottom: 5px; }
+        .round-badge { background: #fff; color: #000; padding: 5px 15px; border: 3px solid #000; display: inline-block; font-family: 'Bangers', cursive; font-size: 22px; box-shadow: 3px 3px 0 #000; transform: skew(-5deg); }
+        .instruction { font-family: 'Bangers', cursive; font-size: 32px; color: #ffcc00; -webkit-text-stroke: 1.5px #000; margin-top: 5px; }
+
+        .timer-container { width: 100%; height: 22px; background: rgba(0,0,0,0.5); border: 3px solid #fff; transform: skew(-10deg); overflow: hidden; margin: 10px auto; }
+        .timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #0088ff, #ff0055); transform-origin: left; }
+        .animate-timer { animation: shrink linear forwards; }
+        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
+
+        .split-container { flex-grow: 1; display: flex; flex-direction: column; position: relative; border: 5px solid #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.6); }
+        .option-box { flex: 1; display: flex; justify-content: center; align-items: center; padding: 25px; text-align: center; position: relative; }
+        .top-box { background: linear-gradient(160deg, #0088ff 0%, #0044aa 100%); border-bottom: 3px solid #fff; }
+        .bottom-box { background: linear-gradient(160deg, #ff4444 0%, #aa0000 100%); border-top: 3px solid #fff; }
+        .number-bubble { position: absolute; top: 15px; left: 15px; background: #ffcc00; color: #000; font-family: 'Bangers', cursive; font-size: 24px; padding: 3px 12px; border: 3px solid #000; border-radius: 20px; transform: skew(-5deg); box-shadow: 3px 3px 0 #000; }
+
+        .dilemma-text { font-family: 'Bangers', cursive; font-size: 34px; line-height: 1.15; color: #fff; -webkit-text-stroke: 1.5px #000; text-shadow: 3px 3px 0 #000; opacity: 0; transform: scale(0.8) translateY(20px); transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .show-top #textTop, .show-bottom #textBottom { opacity: 1; transform: scale(1) translateY(0); }
+
+        .separator-or { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); background: #fff; color: #000; width: 80px; height: 80px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-family: 'Bangers', cursive; font-size: 40px; border: 4px solid #000; z-index: 10; box-shadow: 0 5px 10px rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.3s; }
+        .show-bottom .separator-or { opacity: 1; }
+
+        /* INTRO 1s & FIN */
+        .overlay { position: absolute; inset: 0; background: linear-gradient(135deg, #0044aa 0%, #aa0000 100%); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        #flyingIconsContainer { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+        .flying-particle { position: absolute; top: 50%; left: 50%; object-fit: contain; opacity: 0; }
+        @keyframes explodeOut { 0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; } 100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.3); opacity: 0; } }
+        .intro-logo-heartbeat { width: 210px; height: 210px; border-radius: 50%; object-fit: cover; border: 6px solid #000; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 10; animation: heartbeat 0.85s ease-in-out infinite; }
+        @keyframes heartbeat { 0% { transform: scale(0.85); } 30% { transform: scale(1.15); } 60% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
+        .intro-fade-out { opacity: 0; transition: opacity 0.15s ease-out; pointer-events: none; }
+        .end-box { background: #ffea00; color: #000; border: 5px solid #000; box-shadow: 8px 8px 0 #000; padding: 25px; border-radius: 15px; transform: rotate(-2deg); margin-top: 25px; width: 90%; font-family: 'Bangers', cursive; font-size: 34px; line-height: 1.2; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="header-zone">
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" alt="Logo" class="mini-logo">
+            <div><span class="round-badge" id="roundBadge">DILEMME 1/5</span></div>
+            <div class="instruction">TU PRÉFÈRES...</div>
+            <div class="timer-container"><div class="timer-bar" id="timerBar"></div></div>
+        </div>
+
+        <div class="split-container" id="splitContainer">
+            <div class="option-box top-box">
+                <div class="number-bubble" id="bubbleTop">1.A</div>
+                <div class="dilemma-text" id="textTop"></div>
+            </div>
+            <div class="separator-or">OU</div>
+            <div class="option-box bottom-box">
+                <div class="number-bubble" id="bubbleBottom">1.B</div>
+                <div class="dilemma-text" id="textBottom"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="introOverlay">
+        <div id="flyingIconsContainer"></div>
+        <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" alt="Logo">
+    </div>
+
+    <div class="overlay" id="endScreen" style="display:none; background: rgba(0,0,0,0.95);">
+        <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" style="width:160px;height:160px;" alt="Logo">
+        <div class="end-box">
+            DONNE TON SCORE ET TES CHOIX EN COMMENTAIRE ! 👇
+        </div>
+    </div>
+
+    <script>
+        const database = __DONNEES_IA__;
+        const TIMER_DURATION = 4200;
+        const daIcons = [
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-2.png",
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-3.png",
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-4.png"
+        ];
+        let currentRound = 0;
+
+        window.onload = () => {
+            const container = document.getElementById('flyingIconsContainer');
+            for (let i = 0; i < 16; i++) {
+                const img = document.createElement('img');
+                img.src = daIcons[i % daIcons.length];
+                img.className = 'flying-particle';
+                img.style.setProperty('--tx', (Math.random() - 0.5) * 800 + 'px');
+                img.style.setProperty('--ty', (Math.random() - 0.5) * 1000 + 'px');
+                img.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+                img.style.width = '50px';
+                img.style.animation = 'explodeOut 0.95s ease-out forwards';
+                container.appendChild(img);
+            }
+            setTimeout(() => {
+                const intro = document.getElementById('introOverlay');
+                intro.classList.add('intro-fade-out');
+                setTimeout(() => { intro.style.display = 'none'; setupRound(); }, 150);
+            }, 850);
+        };
+
+        function setupRound() {
+            if (currentRound >= database.length) {
+                document.getElementById('endScreen').style.display = 'flex';
+                return;
+            }
+            const data = database[currentRound];
+            document.getElementById('roundBadge').innerText = `DILEMME ${currentRound + 1}/${database.length}`;
+            const split = document.getElementById('splitContainer');
+            split.classList.remove('show-top', 'show-bottom');
+
+            setTimeout(() => {
+                document.getElementById('bubbleTop').innerText = `${currentRound + 1}.A`;
+                document.getElementById('bubbleBottom').innerText = `${currentRound + 1}.B`;
+                document.getElementById('textTop').innerText = data.dilemmaTop || data.question || "CHOIX A";
+                document.getElementById('textBottom').innerText = data.dilemmaBottom || data.name || "CHOIX B";
+                split.classList.add('show-top');
+                setTimeout(() => {
+                    split.classList.add('show-bottom');
+                    const bar = document.getElementById('timerBar');
+                    bar.classList.remove('animate-timer');
+                    void bar.offsetWidth;
+                    bar.style.animationDuration = (TIMER_DURATION / 1000) + "s";
+                    bar.classList.add('animate-timer');
+                    setTimeout(() => { currentRound++; setupRound(); }, TIMER_DURATION);
+                }, 500);
+            }, 200);
+        }
+    </script>
+</body>
+</html>
