@@ -20,15 +20,13 @@
             overflow: hidden; color: #000; position: relative;
         }
 
-        /* Fond animé */
+        /* Fond rayons manga (statique pour fluidité vidéo maximale sans saccades) */
         body::before {
             content: ""; position: absolute; top: 50%; left: 50%;
-            width: 250vmax; height: 250vmax;
+            width: 220vmax; height: 220vmax;
             background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.06) 0deg 2deg, transparent 2deg 4deg);
             transform: translate(-50%, -50%); pointer-events: none; z-index: 0;
-            animation: spinAction 60s linear infinite;
         }
-        @keyframes spinAction { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
 
         .app-container {
             width: 100%; height: 100%;
@@ -121,35 +119,53 @@
             text-shadow: 4px 4px 0 #000; font-family: 'Bangers', cursive; z-index: 20;
         }
 
-        /* --- 6. INTRO BATTEMENT + ICÔNES VOLANTES & FIN --- */
+        /* --- 6. INTRO BATTEMENT + ICÔNES VOLANTES ULTRA VISIBLES & FIN --- */
         .overlay {
             position: absolute; inset: 0;
-            background: linear-gradient(135deg, #2b1055 0%, #ff0055 100%);
+            background: radial-gradient(circle, #3a1570 0%, #16062c 100%);
             z-index: 2000; display: flex; flex-direction: column;
             justify-content: center; align-items: center; text-align: center; padding: 40px;
         }
         #flyingIconsContainer {
-            position: absolute; inset: 0; z-index: 5; pointer-events: none; overflow: hidden;
+            position: absolute; inset: 0;
+            z-index: 25; /* Devant le logo pour qu'on les voie jaillir clairement */
+            pointer-events: none; overflow: hidden;
         }
         .flying-particle {
-            position: absolute; top: 50%; left: 50%; object-fit: contain; opacity: 0;
+            position: absolute; top: 50%; left: 50%;
+            object-fit: contain; opacity: 0;
+            /* Halo blanc + ombre noire pour ressortir à 100% sur le fond */
+            filter: drop-shadow(0 0 14px rgba(255,255,255,0.95)) drop-shadow(0 8px 16px rgba(0,0,0,0.8));
+            will-change: transform, opacity;
         }
         @keyframes explodeOut {
-            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
-            100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.5); opacity: 0; }
+            0% {
+                transform: translate(-50%, -50%) scale(0.4) rotate(0deg);
+                opacity: 1;
+            }
+            18% {
+                opacity: 1;
+            }
+            78% {
+                opacity: 1; /* Reste 100% visible pendant presque toute la trajectoire */
+            }
+            100% {
+                transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.65);
+                opacity: 0;
+            }
         }
         .intro-logo-heartbeat {
-            width: 380px; height: 380px; border-radius: 50%; object-fit: cover;
-            border: 10px solid #000; box-shadow: 0 25px 50px rgba(0,0,0,0.6);
-            z-index: 10; animation: heartbeat 0.85s ease-in-out infinite;
+            width: 390px; height: 390px; border-radius: 50%; object-fit: cover;
+            border: 10px solid #fff; box-shadow: 0 0 50px rgba(255,0,222,0.7), 0 25px 50px rgba(0,0,0,0.8);
+            z-index: 15; animation: heartbeat 0.95s ease-in-out infinite;
         }
         @keyframes heartbeat {
             0% { transform: scale(0.85); }
-            30% { transform: scale(1.15); }
+            30% { transform: scale(1.18); }
             60% { transform: scale(0.95); }
             100% { transform: scale(1.05); }
         }
-        .intro-fade-out { opacity: 0; transition: opacity 0.15s ease-out; pointer-events: none; }
+        .intro-fade-out { opacity: 0; transition: opacity 0.2s ease-out; pointer-events: none; }
         
         .end-box {
             background: #ffe600; color: #000; border: 8px solid #000;
@@ -223,34 +239,58 @@
         let startTime;
         let currentImgObj = null;
 
-        // --- FONCTION DE PIXELISATION ---
+        // Un seul canvas temporaire réutilisé en mémoire = Zéro saccade CPU !
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // --- FONCTION DE PIXELISATION FLUIDE ---
         function drawPixelated(context, img, pixelSize, width, height) {
             context.imageSmoothingEnabled = false;
             let w = Math.max(1, Math.ceil(width / pixelSize));
             let h = Math.max(1, Math.ceil(height / pixelSize));
 
-            let tempCanvas = document.createElement('canvas');
             tempCanvas.width = w;
             tempCanvas.height = h;
-            let tempCtx = tempCanvas.getContext('2d');
+            tempCtx.imageSmoothingEnabled = false;
+            tempCtx.clearRect(0, 0, w, h);
             tempCtx.drawImage(img, 0, 0, w, h);
 
             context.clearRect(0, 0, width, height);
             context.drawImage(tempCanvas, 0, 0, w, h, 0, 0, width, height);
         }
 
-        // --- LANCEMENT AUTOMATIQUE : INTRO BATTEMENT + ICÔNES QUI VOLENT ---
-        window.onload = () => {
+        // --- LANCEMENT AUTOMATIQUE : PRÉCHARGEMENT DES ICÔNES + EXPLOSION BIEN VISIBLE ---
+        window.onload = async () => {
+            // On précharge les 3 icônes pour qu'elles s'affichent dès la milliseconde 0
+            await Promise.all(daIcons.map(url => new Promise(res => {
+                const i = new Image();
+                i.onload = res;
+                i.onerror = res;
+                i.src = url;
+            })));
+
             const container = document.getElementById('flyingIconsContainer');
-            for (let i = 0; i < 18; i++) {
+            const totalParticles = 24;
+
+            for (let i = 0; i < totalParticles; i++) {
                 const img = document.createElement('img');
                 img.src = daIcons[i % daIcons.length];
                 img.className = 'flying-particle';
-                img.style.setProperty('--tx', (Math.random() - 0.5) * 1400 + 'px');
-                img.style.setProperty('--ty', (Math.random() - 0.5) * 1800 + 'px');
-                img.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
-                img.style.width = '95px';
-                img.style.animation = 'explodeOut 0.95s ease-out forwards';
+
+                // Répartition en cercle (deux couronnes d'explosion) pour couvrir tout l'écran 1080x1920
+                const angle = (i / totalParticles) * Math.PI * 2 + (Math.random() * 0.25);
+                const distance = (i % 2 === 0) ? (420 + Math.random() * 220) : (680 + Math.random() * 260);
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * (distance * 1.25);
+
+                img.style.setProperty('--tx', `${tx}px`);
+                img.style.setProperty('--ty', `${ty}px`);
+                img.style.setProperty('--rot', `${(Math.random() * 540 - 270)}deg`);
+                img.style.width = (i % 2 === 0) ? '155px' : '130px';
+
+                // Légère vague en 2 temps (0s et 0.1s) pour un effet d'explosion dynamique
+                const delay = (i % 3 === 0) ? 0.08 : 0;
+                img.style.animation = `explodeOut 1.1s cubic-bezier(0.15, 0.85, 0.3, 1) ${delay}s forwards`;
                 container.appendChild(img);
             }
 
@@ -260,8 +300,8 @@
                 setTimeout(() => {
                     intro.style.display = 'none';
                     loadLevel(0);
-                }, 150);
-            }, 850);
+                }, 200);
+            }, 1150);
         };
 
         // --- LOGIQUE JEU ---
@@ -273,12 +313,11 @@
             currentIdx = index;
             let data = database[index];
 
-            // Titre dynamique ou par défaut
             if (data.promptText) {
                 document.getElementById('promptTitle').innerText = data.promptText;
             }
 
-            // Badge Couleur (compatible avec data.level de n8n ou data.diff d'origine)
+            // Badge Couleur
             const badge = document.getElementById('diffBadge');
             const diffText = (data.level || data.diff || 'FACILE').toUpperCase();
             badge.innerText = diffText;
@@ -307,9 +346,7 @@
             bar.style.animationDuration = (DURATION_GAME / 1000) + "s";
             
             currentImgObj = new Image();
-            // INDISPENSABLE pour que le Canvas accepte de pixeliser les images d'AniList/Kitsu/PokeAPI
             currentImgObj.crossOrigin = "anonymous";
-            // Utilise un proxy CORS gratuit en secours si le serveur d'image bloque le Canvas
             const rawUrl = data.imgUrl || (data.id ? data.id + '.jpg' : '');
             currentImgObj.src = rawUrl.startsWith('http')
                 ? `https://wsrv.nl/?url=${encodeURIComponent(rawUrl)}&output=jpg`
@@ -325,7 +362,6 @@
             };
             
             currentImgObj.onerror = () => {
-                // Si une image échoue, on passe directement à la question suivante sans bloquer la vidéo
                 setTimeout(() => loadLevel(currentIdx + 1), 500);
             };
         }
