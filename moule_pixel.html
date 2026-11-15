@@ -2,190 +2,86 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 1. CORRECTION FORMAT : On force la taille de l'écran TikTok -->
+    <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anime Pixel Quiz</title>
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Komika+Axis&display=swap" rel="stylesheet">
+    
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: linear-gradient(135deg, #2b1055 0%, #7597de 100%); height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; font-family: 'Komika Axis', sans-serif; overflow: hidden; color: #000; position: relative; }
-        body::before { content: ""; position: absolute; top: 50%; left: 50%; width: 200vmax; height: 200vmax; background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.05) 0deg 2deg, transparent 2deg 4deg); transform: translate(-50%, -50%); pointer-events: none; z-index: 0; animation: spinAction 60s linear infinite; }
-        @keyframes spinAction { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        * { 
+            box-sizing: border-box; 
+        }
+        
+        /* 2. CORRECTION FORMAT : Le body doit faire 1080x1920 exact pour éviter les bandes */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            width: 1080px; 
+            height: 1920px; 
+            /* Ton fond bleu dégradé/strié */
+            background: linear-gradient(135deg, #2b1055 0%, #7597de 100%); 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            font-family: 'Komika Axis', sans-serif;
+            position: relative;
+        }
 
-        .app-container { width: 100%; max-width: 520px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; position: relative; z-index: 1; padding: 15px; }
-        .header { width: 100%; text-align: center; margin-top: 5px; flex-shrink: 0; }
-        .logo-top { width: 75px; height: 75px; border-radius: 50%; border: 3px solid #000; object-fit: cover; margin-bottom: 5px; }
-        .title { font-family: 'Bangers', cursive; font-size: 40px; color: #fff; -webkit-text-stroke: 2px #000; text-shadow: 4px 4px 0 #6a00ff; letter-spacing: 2px; transform: rotate(-2deg); line-height: 1; }
-        .level-badge { display: inline-block; background: #00ff9d; color: #000; font-size: 15px; padding: 5px 15px; border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); margin-top: 10px; transform: skew(-10deg); font-weight: bold; }
+        /* Le conteneur du carré central de ta capture d'écran */
+        .image-container {
+            width: 600px;
+            height: 600px;
+            background-color: #000;
+            border: 8px solid #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
 
-        .image-area-wrapper { width: 100%; flex: 1; display: flex; justify-content: center; align-items: center; margin: 12px 0; position: relative; }
-        .image-area { position: relative; width: 100%; height: 100%; max-height: 420px; border: 5px solid #fff; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5), 8px 8px 0 #000; overflow: hidden; background: #111; display: flex; justify-content: center; align-items: center; }
-        canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
+        /* On s'assure que l'image remplit bien le carré */
+        img, canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-        .timer-wrapper { width: 90%; margin-bottom: 10px; flex-shrink: 0; }
-        .timer-container { width: 100%; height: 22px; background: #333; border: 3px solid #fff; box-shadow: 4px 4px 0 #000; transform: skew(-10deg); }
-        .timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #ff00de, #00ffea); transform-origin: left; }
-        .animate-timer { animation: shrink linear forwards; }
-        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
-
-        .answer-zone { height: 130px; width: 100%; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; z-index: 10; flex-shrink: 0; }
-        .char-name { font-family: 'Bangers', cursive; font-size: 38px; color: #ffe600; -webkit-text-stroke: 1.5px #000; text-shadow: 3px 3px 0 #000; opacity: 0; transform: scale(0.5); transition: 0.35s; margin-bottom: 6px; }
-        .anime-name { background: #fff; color: #000; padding: 5px 20px; border: 3px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.8); font-size: 15px; opacity: 0; transform: translateY(15px); transition: 0.35s; font-weight: bold; }
-        .visible { opacity: 1 !important; transform: scale(1) translateY(0) !important; }
-        .counter { position: absolute; bottom: 8px; right: 15px; font-size: 22px; color: #fff; text-shadow: 2px 2px 0 #000; font-family: 'Bangers', cursive; z-index: 20; }
-
-        /* INTRO 1s & FIN */
-        .overlay { position: absolute; inset: 0; background: linear-gradient(135deg, #2b1055 0%, #7597de 100%); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
-        #flyingIconsContainer { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
-        .flying-particle { position: absolute; top: 50%; left: 50%; object-fit: contain; opacity: 0; }
-        @keyframes explodeOut { 0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; } 100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.3); opacity: 0; } }
-        .intro-logo-heartbeat { width: 210px; height: 210px; border-radius: 50%; object-fit: cover; border: 6px solid #000; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 10; animation: heartbeat 0.85s ease-in-out infinite; }
-        @keyframes heartbeat { 0% { transform: scale(0.85); } 30% { transform: scale(1.15); } 60% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
-        .intro-fade-out { opacity: 0; transition: opacity 0.15s ease-out; pointer-events: none; }
-        .end-box { background: #ffe600; color: #000; border: 5px solid #000; box-shadow: 8px 8px 0 #ff00de; padding: 25px; border-radius: 15px; transform: rotate(-2deg); margin-top: 25px; width: 90%; font-family: 'Bangers', cursive; font-size: 34px; }
+        /* ----- Ajoute ici le CSS de ton logo, tes textes et ta barre ----- */
+        
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="header">
-            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="logo-top" alt="Logo">
-            <div class="title">QUI C'EST ?!</div>
-            <div class="level-badge" id="diffBadge">FACILE</div>
-        </div>
 
-        <div class="image-area-wrapper">
-            <div class="image-area"><canvas id="gameCanvas"></canvas></div>
-        </div>
+    <!-- ----- Ajoute ici ton logo et titre "QUI C'EST ?!" ----- -->
 
-        <div class="timer-wrapper"><div class="timer-container"><div class="timer-bar" id="timerBar"></div></div></div>
-
-        <div class="answer-zone">
-            <div class="char-name" id="charName">???</div>
-            <div class="anime-name" id="animeName">???</div>
-        </div>
-        <div class="counter" id="counter">1 / 8</div>
-
-        <div class="overlay" id="introOverlay">
-            <div id="flyingIconsContainer"></div>
-            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" alt="Logo">
-        </div>
-
-        <div class="overlay" id="endScreen" style="display:none; background: rgba(15,15,25,0.96);">
-            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" style="width:160px;height:160px;" alt="Logo">
-            <div class="end-box">DONNE TON SCORE EN COMMENTAIRE ! 👇</div>
-        </div>
+    <div class="image-container">
+        <!-- 3. CORRECTION IMAGE NOIRE : L'attribut crossorigin est OBLIGATOIRE -->
+        <img id="personnage" src="URL_INJECTEE_PAR_N8N" crossorigin="anonymous" alt="Personnage">
+        
+        <!-- (Si ton code utilise un Canvas pour l'effet Pixel, mets le <canvas> ici) -->
     </div>
 
+    <!-- ----- Ajoute ici ta barre de progression "1/8" ----- -->
+
     <script>
-        const database = __DONNEES_IA__;
-        const DURATION_GAME = 3600;
-        const START_PIXEL_SIZE = 55;
-        const END_PIXEL_TARGET = START_PIXEL_SIZE * 0.17;
-        const daIcons = [
-            "https://raw.githubusercontent.com/nanana57/tik/main/icon-2.png",
-            "https://raw.githubusercontent.com/nanana57/tik/main/icon-3.png",
-            "https://raw.githubusercontent.com/nanana57/tik/main/icon-4.png"
-        ];
-
-        let currentIdx = 0, gameCanvas = document.getElementById('gameCanvas'), ctx = gameCanvas.getContext('2d'), startTime, currentImgObj = null;
-
-        window.onload = () => {
-            const container = document.getElementById('flyingIconsContainer');
-            for (let i = 0; i < 16; i++) {
-                const img = document.createElement('img');
-                img.src = daIcons[i % daIcons.length];
-                img.className = 'flying-particle';
-                img.style.setProperty('--tx', (Math.random() - 0.5) * 800 + 'px');
-                img.style.setProperty('--ty', (Math.random() - 0.5) * 1000 + 'px');
-                img.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
-                img.style.width = '50px';
-                img.style.animation = 'explodeOut 0.95s ease-out forwards';
-                container.appendChild(img);
-            }
-            setTimeout(() => {
-                const intro = document.getElementById('introOverlay');
-                intro.classList.add('intro-fade-out');
-                setTimeout(() => { intro.style.display = 'none'; loadLevel(0); }, 150);
-            }, 850);
+        // 4. CORRECTION JAVASCRIPT (Très important si tu utilises un script pour l'effet Pixel)
+        // Si c'est du JavaScript qui gère l'apparition de ton image ou le canvas, 
+        // tu dois absolument lui donner l'autorisation de lire l'image avec cette ligne :
+        
+        /* Exemple de ton code d'animation :
+        const img = new Image();
+        img.crossOrigin = "anonymous"; // <-- LA LIGNE MAGIQUE QUI DÉBLOQUE L'ANIMATION
+        img.src = 'L_URL_DE_TON_IMAGE';
+        
+        img.onload = function() {
+            // Lancer l'animation de dé-pixelisation ici
         };
-
-        function drawPixelated(context, img, pixelSize, width, height) {
-            context.imageSmoothingEnabled = false;
-            let w = Math.max(1, Math.ceil(width / pixelSize));
-            let h = Math.max(1, Math.ceil(height / pixelSize));
-            let tempCanvas = document.createElement('canvas');
-            tempCanvas.width = w; tempCanvas.height = h;
-            tempCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            context.clearRect(0, 0, width, height);
-            context.drawImage(tempCanvas, 0, 0, w, h, 0, 0, width, height);
-        }
-
-        function loadLevel(index) {
-            if (index >= database.length) {
-                document.getElementById('endScreen').style.display = 'flex';
-                return;
-            }
-            currentIdx = index;
-            let data = database[index];
-            const badge = document.getElementById('diffBadge');
-            badge.innerText = data.level || "NORMAL";
-            badge.style.backgroundColor = data.color || "#ffe600";
-
-            document.getElementById('charName').classList.remove('visible');
-            document.getElementById('animeName').classList.remove('visible');
-            document.getElementById('counter').innerText = (index + 1) + " / " + database.length;
-
-            let bar = document.getElementById('timerBar');
-            bar.classList.remove('animate-timer');
-            void bar.offsetWidth;
-            bar.style.animationDuration = (DURATION_GAME / 1000) + "s";
-
-            currentImgObj = new Image();
-            currentImgObj.crossOrigin = "Anonymous";
-            currentImgObj.src = "https://wsrv.nl/?url=" + encodeURIComponent(data.imgUrl) + "&output=png";
-            currentImgObj.onload = () => {
-                gameCanvas.width = 400;
-                gameCanvas.height = 400 * (currentImgObj.height / currentImgObj.width);
-                bar.classList.add('animate-timer');
-                startTime = null;
-                requestAnimationFrame(gameLoop);
-            };
-        }
-
-        function gameLoop(timestamp) {
-            if (!startTime) startTime = timestamp;
-            let progress = timestamp - startTime;
-            let pct = Math.min(1, progress / DURATION_GAME);
-            let data = database[currentIdx];
-
-            if (progress < DURATION_GAME) {
-                let currentPixelSize = START_PIXEL_SIZE - (pct * (START_PIXEL_SIZE - END_PIXEL_TARGET));
-                if (data.isBait) currentPixelSize = Math.max(currentPixelSize, START_PIXEL_SIZE * 0.25);
-                drawPixelated(ctx, currentImgObj, currentPixelSize, gameCanvas.width, gameCanvas.height);
-                requestAnimationFrame(gameLoop);
-            } else {
-                timeOutSequence();
-            }
-        }
-
-        function timeOutSequence() {
-            let nameBox = document.getElementById('charName');
-            let animeBox = document.getElementById('animeName');
-            let data = database[currentIdx];
-
-            if (data.isBait) {
-                nameBox.innerText = "ALORS TU L'AS ?";
-                animeBox.innerText = "👇 ÉCRIS EN COMMENTAIRE ! 👇";
-                nameBox.classList.add('visible'); animeBox.classList.add('visible');
-                setTimeout(() => loadLevel(currentIdx + 1), 1800);
-            } else {
-                drawPixelated(ctx, currentImgObj, 1, gameCanvas.width, gameCanvas.height);
-                nameBox.style.color = "#ffe600";
-                nameBox.innerText = data.name;
-                animeBox.innerText = "📺 " + data.anime;
-                nameBox.classList.add('visible'); animeBox.classList.add('visible');
-                setTimeout(() => loadLevel(currentIdx + 1), 1800);
-            }
-        }
+        */
     </script>
 </body>
 </html>
