@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DEVINE EN 3 MOTS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            width: 1080px;
+            height: 1920px;
+            font-family: 'Bangers', cursive;
+            overflow: hidden;
+            color: #fff;
+            background: #000;
+            position: relative;
+        }
+        
+        .sunburst-bg {
+            position: absolute; top: 50%; left: 50%; width: 300%; height: 300%;
+            margin-top: -150%; margin-left: -150%;
+            background: conic-gradient(#fff 0deg 10deg, #ff9900 10deg 20deg);
+            background-repeat: repeat; animation: rotateSun 25s linear infinite; z-index: 1;
+        }
+        @keyframes rotateSun { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        #gameContainer {
+            width: 1080px;
+            height: 1920px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            padding: 50px 40px;
+        }
+
+        .game-header { width: 100%; text-align: center; margin-top: 10px; z-index: 20; }
+        .game-title-small {
+            font-size: 82px;
+            color: #fff;
+            -webkit-text-stroke: 3px #000;
+            text-shadow: 6px 6px 0 #000;
+            line-height: 1.05;
+        }
+        .round-counter {
+            font-size: 54px;
+            color: #ffee00;
+            -webkit-text-stroke: 2px #000;
+            background: #000;
+            display: inline-block;
+            padding: 8px 35px;
+            border-radius: 20px;
+            border: 5px solid #fff;
+            margin-top: 15px;
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.6);
+        }
+
+        #topHintsBar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 35px;
+            width: 100%;
+            height: 120px;
+            z-index: 20;
+        }
+        .hint-slot {
+            background: rgba(0,0,0,0.75);
+            border: 5px solid #fff;
+            color: #ffee00;
+            font-size: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            border-radius: 18px;
+            text-transform: uppercase;
+            opacity: 0.35;
+            transition: all 0.3s ease;
+            text-align: center;
+            padding: 5px 10px;
+            -webkit-text-stroke: 1.5px #000;
+        }
+        .hint-slot.filled {
+            opacity: 1;
+            background: #000;
+            transform: scale(1.04);
+            box-shadow: 0 8px 0 rgba(0,0,0,0.6);
+        }
+
+        .game-stage {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 40px;
+        }
+        .game-wrapper {
+            position: relative;
+            width: 48%;
+            height: 68%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            transition: transform 0.2s;
+        }
+        .game-char {
+            height: 100%;
+            width: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
+        }
+        .game-wrapper.talking {
+            transform: scale(1.06) translateY(-20px);
+        }
+
+        .game-bubble {
+            position: absolute;
+            top: -150px;
+            background: #fff;
+            color: #000;
+            padding: 22px 30px;
+            border-radius: 35px;
+            font-size: 58px;
+            border: 7px solid #000;
+            z-index: 100;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            min-width: 280px;
+            max-width: 480px;
+            text-align: center;
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+            line-height: 1.1;
+        }
+        .game-bubble.visible { opacity: 1; transform: scale(1); }
+        .game-bubble-left { left: 10px; }
+        .game-bubble-right { right: 10px; top: -190px; background: #ffee00; }
+
+        #timerContainer {
+            width: 85%;
+            height: 45px;
+            background: #000;
+            border: 6px solid #fff;
+            border-radius: 25px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            display: none;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.5);
+            z-index: 50;
+        }
+        #timerFill {
+            width: 0%;
+            height: 100%;
+            background: #00ff00;
+            transition: width 1.5s linear;
+        }
+
+        .reveal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10,10,10,0.96);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+            padding: 50px;
+        }
+        .reveal-overlay.active { display: flex; }
+        .reveal-header-text {
+            font-size: 70px;
+            color: #fff;
+            margin-bottom: 25px;
+            -webkit-text-stroke: 2px #000;
+        }
+        .reveal-img-box {
+            position: relative;
+            width: 820px;
+            height: 880px;
+            transform: rotate(-2deg);
+            border: 12px solid #fff;
+            box-shadow: 0 0 50px #ffee00;
+            background: #111;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+        .reveal-img { width: 100%; height: 100%; object-fit: contain; }
+        .reveal-title {
+            font-size: 100px;
+            color: #ffee00;
+            -webkit-text-stroke: 4px #000;
+            text-shadow: 8px 8px 0 #eb2f06;
+            margin-top: 40px;
+            text-align: center;
+            line-height: 1.05;
+        }
+    </style>
+</head>
+<body>
+    <div class="sunburst-bg"></div>
+
+    <div id="gameContainer">
+        <div class="game-header">
+            <div class="game-title-small" id="mainPrompt">DEVINE EN 3 MOTS</div>
+            <div class="round-counter" id="roundCounter">1 / 8</div>
+        </div>
+
+        <div id="topHintsBar">
+            <div class="hint-slot" id="slot1"></div>
+            <div class="hint-slot" id="slot2"></div>
+            <div class="hint-slot" id="slot3"></div>
+        </div>
+
+        <div class="game-stage">
+            <div class="game-wrapper char-left" id="gameHost">
+                <div class="game-bubble game-bubble-left" id="gameBubbleH">...</div>
+                <img src="https://raw.githubusercontent.com/nanana57/tik/main/luffy.png" class="game-char">
+            </div>
+            <div class="game-wrapper char-right" id="gameGuest">
+                <div class="game-bubble game-bubble-right" id="gameBubbleG">...</div>
+                <img src="https://raw.githubusercontent.com/nanana57/tik/main/naruto.png" class="game-char">
+            </div>
+        </div>
+
+        <div id="timerContainer">
+            <div id="timerFill"></div>
+        </div>
+
+        <div class="reveal-overlay" id="revealScreen">
+            <h2 class="reveal-header-text" id="revealHeader">C'ÉTAIT :</h2>
+            <div class="reveal-img-box" id="revealImgBox">
+                <img src="" class="reveal-img" id="revealImg">
+            </div>
+            <div class="reveal-title" id="revealText">NOM</div>
+        </div>
+    </div>
+
+    <script>
+        const database = __DONNEES_IA__;
+        let currentRound = 0;
+
+        const bubbleH = document.getElementById('gameBubbleH');
+        const bubbleG = document.getElementById('gameBubbleG');
+        const hostW = document.getElementById('gameHost');
+        const guestW = document.getElementById('gameGuest');
+        const slots = [document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
+        const roundCounter = document.getElementById('roundCounter');
+        const timerContainer = document.getElementById('timerContainer');
+        const timerFill = document.getElementById('timerFill');
+        const revealScreen = document.getElementById('revealScreen');
+        const revealHeader = document.getElementById('revealHeader');
+        const revealText = document.getElementById('revealText');
+        const revealImg = document.getElementById('revealImg');
+        const revealImgBox = document.getElementById('revealImgBox');
+        const mainPrompt = document.getElementById('mainPrompt');
+
+        window.onload = () => {
+            if (database && database.length > 0) {
+                playRound();
+            }
+        };
+
+        async function playRound() {
+            if (!database || currentRound >= database.length) return;
+            const data = database[currentRound];
+            
+            roundCounter.innerText = `${currentRound + 1} / ${database.length}`;
+            mainPrompt.innerText = data.promptText || "DEVINE EN 3 MOTS";
+            resetGameUI();
+
+            // Indices et fausses pistes (avec valeurs de secours automatiques si l'IA les oublie)
+            const clues = (data.clues && data.clues.length >= 3) ? data.clues : [
+                data.anime ? data.anime.toUpperCase() : "MANGA",
+                data.level || "CULTE",
+                data.name ? `LETTRE ${data.name[0]}` : "MYSTÈRE"
+            ];
+            const wrong = (data.wrong && data.wrong.length >= 2) ? data.wrong : [
+                "DORA L'EXPLORATRICE ?",
+                "POKÉMON ?"
+            ];
+
+            // Séquence : 3 mots (3 x 1.8s) + 2 fausses pistes (2 x 1.8s) + pauses = ~10s + 1.5s timer = 11.5s
+            for (let i = 0; i < 3; i++) {
+                await speak('host', clues[i]);
+                slots[i].innerText = clues[i];
+                slots[i].classList.add('filled');
+                await wait(1600);
+                resetBubbles();
+
+                if (i < 2) {
+                    await wait(200);
+                    await speak('guest', wrong[i]);
+                    await wait(1600);
+                    resetBubbles();
+                    await wait(250);
+                }
+            }
+
+            await runTimer();
+            showReveal(data);
+        }
+
+        function runTimer() {
+            return new Promise(resolve => {
+                timerContainer.style.display = 'block';
+                timerFill.style.width = '0%';
+                void timerContainer.offsetWidth;
+                timerFill.style.width = '100%';
+                setTimeout(() => {
+                    timerContainer.style.display = 'none';
+                    timerFill.style.width = '0%';
+                    resolve();
+                }, 1500);
+            });
+        }
+
+        function speak(who, text) {
+            resetBubbles();
+            if (who === 'host') {
+                bubbleH.innerText = text;
+                bubbleH.classList.add('visible');
+                hostW.classList.add('talking');
+            } else {
+                bubbleG.innerText = text;
+                bubbleG.classList.add('visible');
+                guestW.classList.add('talking');
+            }
+            return wait(100);
+        }
+
+        function resetBubbles() {
+            bubbleH.classList.remove('visible');
+            bubbleG.classList.remove('visible');
+            hostW.classList.remove('talking');
+            guestW.classList.remove('talking');
+        }
+
+        function resetGameUI() {
+            revealScreen.classList.remove('active');
+            resetBubbles();
+            slots.forEach(s => { s.innerText = ""; s.classList.remove('filled'); });
+            timerContainer.style.display = 'none';
+        }
+
+        function showReveal(data) {
+            if (data.isBait) {
+                revealHeader.innerText = "TU L'AS TROUVÉ ? 🤔";
+                revealImgBox.style.display = 'none';
+                revealText.innerText = "DIS-LE EN COMMENTAIRE ! 👇";
+            } else {
+                revealHeader.innerText = "C'ÉTAIT :";
+                revealImgBox.style.display = 'block';
+                revealImg.src = data.imgUrl || '';
+                revealText.innerText = data.name || "MYSTÈRE";
+            }
+            revealScreen.classList.add('active');
+
+            setTimeout(() => {
+                currentRound++;
+                playRound();
+            }, 2600);
+        }
+
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+    </script>
+</body>
+</html>
