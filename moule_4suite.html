@@ -33,12 +33,12 @@
         .header {
             text-align: center;
             font-family: 'Bangers', cursive;
-            font-size: 86px;
+            font-size: 82px;
             color: var(--manga-yellow);
             -webkit-text-stroke: 3px #000;
             text-shadow: 8px 8px 0 var(--manga-red);
             z-index: 10;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         .logo-top {
             width: 140px;
@@ -58,15 +58,15 @@
             gap: 28px;
             position: relative;
             z-index: 5;
-            padding-bottom: 40px;
+            padding-bottom: 30px;
         }
         .quiz-row {
             display: flex;
             align-items: center;
             gap: 32px;
             flex: 1;
-            background: rgba(0, 0, 0, 0.45);
-            border: 4px solid rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.55);
+            border: 4px solid rgba(255, 255, 255, 0.15);
             border-radius: 24px;
             padding: 24px 30px;
         }
@@ -116,26 +116,50 @@
             vertical-align: middle;
         }
 
+        /* ÉCRAN DE RÉVÉLATION AU PREMIER PLAN ABSOLU */
         .reveal-overlay {
             position: absolute;
-            inset: 0;
-            background: #111;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 15, 0.98);
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 50;
-            padding: 50px;
+            z-index: 500;
+            padding: 60px;
+        }
+        .reveal-overlay.active {
+            display: flex;
+            animation: popReveal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popReveal {
+            0% { opacity: 0; transform: scale(0.85); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .reveal-badge {
+            font-family: 'Bangers', cursive;
+            font-size: 65px;
+            color: #fff;
+            letter-spacing: 3px;
+            margin-bottom: 25px;
+            -webkit-text-stroke: 2px #000;
+            text-shadow: 5px 5px 0 var(--manga-red);
         }
         .final-img-box {
             position: relative;
-            width: 880px;
-            height: 980px;
+            width: 860px;
+            height: 960px;
             border: 12px solid #fff;
-            box-shadow: 18px 18px 0 #000;
+            box-shadow: 0 0 40px rgba(255, 222, 0, 0.4), 18px 18px 0 #000;
             overflow: hidden;
-            background: #000;
-            border-radius: 20px;
+            background: #111;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .img-bg-blur {
             position: absolute;
@@ -153,13 +177,26 @@
         }
         .final-title {
             font-family: 'Bangers', cursive;
-            font-size: 96px;
+            font-size: 105px;
             color: var(--manga-yellow);
-            margin-top: 45px;
+            margin-top: 40px;
             text-align: center;
             -webkit-text-stroke: 4px #000;
             text-shadow: 10px 10px 0 var(--manga-red);
-            line-height: 1.1;
+            line-height: 1.05;
+            text-transform: uppercase;
+        }
+        .final-anime {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 42px;
+            color: #fff;
+            margin-top: 15px;
+            background: var(--manga-red);
+            padding: 8px 30px;
+            border-radius: 12px;
+            border: 4px solid #000;
+            text-transform: uppercase;
         }
 
         /* INTRO 1s & FIN */
@@ -240,11 +277,14 @@
             <div class="quiz-row"><div class="point-box" id="p3"><span class="val">3</span><span class="label">PTS</span></div><div class="text-box" id="t3"></div></div>
             <div class="quiz-row"><div class="point-box" id="p2"><span class="val">2</span><span class="label">PTS</span></div><div class="text-box" id="t2"></div></div>
             <div class="quiz-row"><div class="point-box" id="p1"><span class="val">1</span><span class="label">PT</span></div><div class="text-box" id="t1"></div></div>
+        </div>
 
-            <div class="reveal-overlay" id="reveal-zone">
-                <div class="final-img-box" id="final-img-box"></div>
-                <div id="final-title" class="final-title"></div>
-            </div>
+        <!-- DÉPLACÉ À LA RACINE DE .tiktok-container POUR UN PLEIN ÉCRAN GARANTI -->
+        <div class="reveal-overlay" id="reveal-zone">
+            <div class="reveal-badge" id="reveal-badge">LA RÉPONSE EST :</div>
+            <div class="final-img-box" id="final-img-box"></div>
+            <div id="final-title" class="final-title"></div>
+            <div id="final-anime" class="final-anime"></div>
         </div>
 
         <div class="overlay" id="introOverlay">
@@ -260,8 +300,8 @@
 
     <script>
         const database = __DONNEES_IA__;
-        const typingSpeed = 22;
-        const revealTime = 1800;
+        const typingSpeed = 16; // Optimisé pour finir les 4 indices en ~10 secondes
+        const revealTime = 2600; // 2.6 secondes bien visibles pour la révélation du personnage
         const daIcons = [
             "https://raw.githubusercontent.com/nanana57/tik/main/icon-2.png",
             "https://raw.githubusercontent.com/nanana57/tik/main/icon-3.png",
@@ -294,14 +334,20 @@
                 document.getElementById('endScreen').style.display = 'flex';
                 return;
             }
-            document.getElementById('reveal-zone').style.display = 'none';
-            document.getElementById('header-text').innerText = `QUESTION ${currentIdx + 1}/${database.length}`;
+
+            const revealZone = document.getElementById('reveal-zone');
+            revealZone.classList.remove('active');
+            revealZone.style.display = 'none';
+
+            const data = database[currentIdx];
+            const promptHeader = data.promptText || "QUI SUIS-JE ?";
+            document.getElementById('header-text').innerText = `${promptHeader} (${currentIdx + 1}/${database.length})`;
+
             for (let i = 1; i <= 4; i++) {
                 document.getElementById(`t${i}`).innerHTML = "";
                 document.getElementById(`p${i}`).classList.remove('active');
             }
 
-            const data = database[currentIdx];
             const clues = data.clues && data.clues.length >= 4 ? data.clues : [
                 "Indice 4 pts : Issu de l'univers " + (data.anime || "Anime"),
                 "Indice 3 pts : Très populaire auprès des fans",
@@ -313,21 +359,43 @@
             for (let s = 0; s < 4; s++) {
                 document.querySelectorAll('.point-box').forEach(b => b.classList.remove('active'));
                 document.getElementById(`p${ids[s]}`).classList.add('active');
-                await typeWriter(document.getElementById(`t${ids[s]}`), clues[s]);
+                await typeWriter(document.getElementById(`t${ids[s]}`), String(clues[s] || ""));
             }
 
+            // Affichage de la révélation
             const imgBox = document.getElementById('final-img-box');
             const titleEl = document.getElementById('final-title');
-            if (data.isBait) {
-                imgBox.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff;font-family:'Bangers';font-size:84px;padding:40px;text-align:center;">TU L'AS TROUVÉ ?</div>`;
-                titleEl.innerText = "ÉCRIS LA RÉPONSE EN COMMENTAIRE ! 👇";
-            } else {
-                imgBox.innerHTML = `<div class="img-bg-blur" style="background-image:url('${data.imgUrl}')"></div><img src="${data.imgUrl}" class="final-img">`;
-                titleEl.innerText = data.name;
-            }
-            document.getElementById('reveal-zone').style.display = 'flex';
+            const animeEl = document.getElementById('final-anime');
+            const badgeEl = document.getElementById('reveal-badge');
 
-            setTimeout(() => { currentIdx++; loadQuiz(); }, revealTime);
+            if (data.isBait) {
+                badgeEl.innerText = "QUESTION PIÈGE !";
+                imgBox.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ffde00;font-family:'Bangers';font-size:110px;padding:40px;text-align:center;-webkit-text-stroke:3px #000;">TU L'AS TROUVÉ ? 🤔</div>`;
+                titleEl.innerText = "DIS-LE EN COMMENTAIRE ! 👇";
+                animeEl.style.display = 'none';
+            } else {
+                badgeEl.innerText = "LA RÉPONSE EST :";
+                if (data.imgUrl) {
+                    imgBox.innerHTML = `<div class="img-bg-blur" style="background-image:url('${data.imgUrl}')"></div><img src="${data.imgUrl}" class="final-img">`;
+                } else {
+                    imgBox.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff;font-family:'Bangers';font-size:120px;">${data.name || 'MYSTÈRE'}</div>`;
+                }
+                titleEl.innerText = data.name || "MYSTÈRE";
+                if (data.anime) {
+                    animeEl.innerText = data.anime;
+                    animeEl.style.display = 'block';
+                } else {
+                    animeEl.style.display = 'none';
+                }
+            }
+
+            revealZone.style.display = 'flex';
+            revealZone.classList.add('active');
+
+            setTimeout(() => {
+                currentIdx++;
+                loadQuiz();
+            }, revealTime);
         }
 
         function typeWriter(element, text) {
@@ -336,8 +404,12 @@
                 function type() {
                     if (i < text.length) {
                         element.innerHTML = text.substring(0, i + 1) + '<span class="cursor"></span>';
-                        i++; setTimeout(type, typingSpeed);
-                    } else { element.innerHTML = text; setTimeout(resolve, 250); }
+                        i++;
+                        setTimeout(type, typingSpeed);
+                    } else {
+                        element.innerHTML = text;
+                        setTimeout(resolve, 300);
+                    }
                 }
                 type();
             });
