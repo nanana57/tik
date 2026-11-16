@@ -70,7 +70,7 @@
             background: rgba(0,0,0,0.75);
             border: 5px solid #fff;
             color: #ffee00;
-            font-size: 52px;
+            font-size: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -97,12 +97,12 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            padding-bottom: 40px;
+            padding-bottom: 30px;
         }
         .game-wrapper {
             position: relative;
             width: 48%;
-            height: 68%;
+            height: 56%;
             display: flex;
             justify-content: center;
             align-items: flex-end;
@@ -115,31 +115,31 @@
             filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
         }
         .game-wrapper.talking {
-            transform: scale(1.06) translateY(-20px);
+            transform: scale(1.05) translateY(-15px);
         }
 
         .game-bubble {
             position: absolute;
-            top: -150px;
+            top: -170px;
             background: #fff;
             color: #000;
-            padding: 22px 30px;
+            padding: 20px 28px;
             border-radius: 35px;
-            font-size: 58px;
+            font-size: 54px;
             border: 7px solid #000;
             z-index: 100;
             opacity: 0;
             transform: scale(0);
             transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            min-width: 280px;
-            max-width: 480px;
+            min-width: 260px;
+            max-width: 460px;
             text-align: center;
             box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
             line-height: 1.1;
         }
         .game-bubble.visible { opacity: 1; transform: scale(1); }
         .game-bubble-left { left: 10px; }
-        .game-bubble-right { right: 10px; top: -190px; background: #ffee00; }
+        .game-bubble-right { right: 10px; background: #ffee00; }
 
         #timerContainer {
             width: 85%;
@@ -243,6 +243,7 @@
     <script>
         const database = __DONNEES_IA__;
         let currentRound = 0;
+        window.quizFinished = false;
 
         const bubbleH = document.getElementById('gameBubbleH');
         const bubbleG = document.getElementById('gameBubbleG');
@@ -266,14 +267,20 @@
         };
 
         async function playRound() {
-            if (!database || currentRound >= database.length) return;
+            if (!database || currentRound >= database.length) {
+                revealHeader.innerText = "QUIZ TERMINÉ !";
+                revealImgBox.style.display = 'none';
+                revealText.innerText = "DONNE TON SCORE EN COM ! 👇";
+                revealScreen.classList.add('active');
+                window.quizFinished = true;
+                return;
+            }
             const data = database[currentRound];
             
             roundCounter.innerText = `${currentRound + 1} / ${database.length}`;
             mainPrompt.innerText = data.promptText || "DEVINE EN 3 MOTS";
             resetGameUI();
 
-            // Indices et fausses pistes (avec valeurs de secours automatiques si l'IA les oublie)
             const clues = (data.clues && data.clues.length >= 3) ? data.clues : [
                 data.anime ? data.anime.toUpperCase() : "MANGA",
                 data.level || "CULTE",
@@ -284,18 +291,18 @@
                 "POKÉMON ?"
             ];
 
-            // Séquence : 3 mots (3 x 1.8s) + 2 fausses pistes (2 x 1.8s) + pauses = ~10s + 1.5s timer = 11.5s
+            // Durée exacte : 3 x 1400ms + 2 x 1400ms + pauses (900ms) + Timer (1500ms) + Reveal (2600ms) = 13200ms
             for (let i = 0; i < 3; i++) {
                 await speak('host', clues[i]);
                 slots[i].innerText = clues[i];
                 slots[i].classList.add('filled');
-                await wait(1600);
+                await wait(1400);
                 resetBubbles();
 
                 if (i < 2) {
                     await wait(200);
                     await speak('guest', wrong[i]);
-                    await wait(1600);
+                    await wait(1400);
                     resetBubbles();
                     await wait(250);
                 }
