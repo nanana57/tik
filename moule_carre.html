@@ -2,50 +2,340 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Quiz 16 Carrés</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Komika+Axis&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: linear-gradient(to bottom, #2c3e50, #000000); height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; color: white; }
+        :root {
+            --manga-yellow: #ffde00;
+            --manga-red: #eb2f06;
+            --neon-green: #00ff7f;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        .app-container { width: 100%; max-width: 900px; height: 100vh; display: flex; flex-direction: column; align-items: center; position: relative; padding: 20px; }
+        body {
+            background: linear-gradient(135deg, #2b1055 0%, #7597de 100%);
+            width: 1080px;
+            height: 1920px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            color: #fff;
+            position: relative;
+        }
 
-        .header { width: 100%; text-align: center; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
-        .title { font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
-        .current-points-box { background: rgba(0, 255, 127, 0.1); padding: 10px 25px; border-radius: 12px; border: 2px solid #00ff7f; text-align: center; min-width: 140px; }
-        .points-label { font-size: 11px; color: #cfcfcf; text-transform: uppercase; }
-        .points-value { font-size: 36px; font-weight: 900; color: #00ff7f; transition: color 0.3s; }
+        /* Fond dynamique rayons manga comme le Quiz Pixel */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 220vmax;
+            height: 220vmax;
+            background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.08) 0deg 8deg, transparent 8deg 18deg);
+            transform: translate(-50%, -50%);
+            animation: spinRays 35s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        @keyframes spinRays {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
 
-        .image-area { position: relative; width: 100%; max-width: 800px; height: 500px; background: #000; border-radius: 15px; border: 4px solid #333; overflow: hidden; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
-        #charImage { width: 100%; height: 100%; object-fit: contain; z-index: 1; }
+        .app-container {
+            width: 1080px;
+            height: 1920px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 5;
+            padding: 45px 50px;
+        }
 
-        .grid-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); z-index: 10; width: 100%; height: 100%; }
-        .grid-cell { background-color: #111; border: 1px solid rgba(255,255,255,0.05); transition: opacity 0.3s ease; opacity: 1; }
-        .grid-cell.revealed { opacity: 0; }
+        /* 1. HEADER DYNAMIQUE (Titre du quiz + Compteur + Score) */
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
 
-        .timer-wrapper { width: 100%; max-width: 800px; margin-bottom: 20px; }
-        .timer-container { width: 100%; height: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
-        .timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #00ff7f, #ffff00, #ff4500); transform-origin: left; }
+        .round-badge {
+            background: #000;
+            color: var(--manga-yellow);
+            font-family: 'Bangers', cursive;
+            font-size: 52px;
+            padding: 10px 32px;
+            border-radius: 18px;
+            border: 5px solid #fff;
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.6);
+            letter-spacing: 2px;
+        }
 
-        .answer-zone { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; width: 100%; text-align: center; }
-        .char-name { font-size: 42px; font-weight: 900; text-transform: uppercase; opacity: 0; transform: translateY(20px); transition: all 0.5s; text-shadow: 0 5px 20px rgba(0,0,0,1); }
-        .char-name.visible { opacity: 1; transform: translateY(0); }
-        .counter { font-size: 14px; color: #666; margin-top: auto; }
+        .logo-top {
+            width: 125px;
+            height: 125px;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            object-fit: cover;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+
+        .current-points-box {
+            background: rgba(0, 0, 0, 0.75);
+            padding: 10px 30px;
+            border-radius: 20px;
+            border: 5px solid var(--neon-green);
+            text-align: center;
+            min-width: 230px;
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.6);
+            transition: all 0.3s ease;
+        }
+        .points-label {
+            font-size: 20px;
+            font-weight: 900;
+            color: #ddd;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .points-value {
+            font-family: 'Bangers', cursive;
+            font-size: 64px;
+            color: var(--neon-green);
+            line-height: 1;
+            -webkit-text-stroke: 2px #000;
+        }
+
+        .quiz-title-banner {
+            width: 100%;
+            text-align: center;
+            font-family: 'Bangers', cursive;
+            font-size: 82px;
+            color: var(--manga-yellow);
+            -webkit-text-stroke: 3.5px #000;
+            text-shadow: 7px 7px 0 var(--manga-red);
+            line-height: 1.05;
+            margin: 10px 0 25px 0;
+            text-transform: uppercase;
+            padding: 0 10px;
+        }
+
+        /* 2. CADRE PHOTO + GRILLE 16 CARRÉS */
+        .image-area {
+            position: relative;
+            width: 920px;
+            height: 960px;
+            background: #111;
+            border-radius: 30px;
+            border: 10px solid #fff;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 14px 14px 0 #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .img-bg-blur {
+            position: absolute;
+            inset: -10%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(25px) brightness(0.45);
+            z-index: 0;
+        }
+
+        #charImage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 1;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            z-index: 10;
+        }
+
+        .grid-cell {
+            background: linear-gradient(145deg, #1e272e, #0f1418);
+            border: 3px solid rgba(255, 255, 255, 0.18);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Bangers', cursive;
+            font-size: 65px;
+            color: rgba(255, 255, 255, 0.22);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            opacity: 1;
+        }
+
+        .grid-cell.revealed {
+            opacity: 0;
+            transform: scale(0.7);
+            pointer-events: none;
+        }
+
+        /* 3. BARRE DE TIMER */
+        .timer-wrapper {
+            width: 920px;
+            margin-bottom: 25px;
+        }
+        .timer-container {
+            width: 100%;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.65);
+            border-radius: 20px;
+            border: 5px solid #fff;
+            overflow: hidden;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.5);
+        }
+        .timer-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #00ff7f, #ffde00, #ff2a00);
+            transform-origin: left;
+        }
+
+        /* 4. ZONE DE RÉPONSE */
+        .answer-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            text-align: center;
+        }
+
+        .char-name {
+            font-family: 'Bangers', cursive;
+            font-size: 100px;
+            color: var(--manga-yellow);
+            text-transform: uppercase;
+            -webkit-text-stroke: 4px #000;
+            text-shadow: 9px 9px 0 var(--manga-red);
+            opacity: 0;
+            transform: scale(0.7);
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            line-height: 1.05;
+        }
+        .char-name.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .anime-title {
+            font-size: 40px;
+            font-weight: 900;
+            color: #fff;
+            background: #000;
+            padding: 8px 32px;
+            border-radius: 15px;
+            border: 4px solid var(--manga-yellow);
+            margin-top: 12px;
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            text-transform: uppercase;
+        }
+        .anime-title.visible { opacity: 1; }
+
+        /* 5. INTRO ANIMÉE 1s ET ÉCRAN DE FIN */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #2b1055 0%, #eb2f06 100%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px;
+        }
+        #flyingIconsContainer {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .flying-particle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            object-fit: contain;
+            opacity: 0;
+        }
+        @keyframes explodeOut {
+            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+            100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.4); opacity: 0; }
+        }
+        .intro-logo-heartbeat {
+            width: 380px;
+            height: 380px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 12px solid #000;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+            z-index: 10;
+            animation: heartbeat 0.85s ease-in-out infinite;
+        }
+        @keyframes heartbeat {
+            0% { transform: scale(0.85); }
+            30% { transform: scale(1.15); }
+            60% { transform: scale(0.95); }
+            100% { transform: scale(1.05); }
+        }
+        .intro-fade-out {
+            opacity: 0;
+            transition: opacity 0.15s ease-out;
+            pointer-events: none;
+        }
+        .end-box {
+            background: var(--manga-yellow);
+            color: #000;
+            border: 10px solid #000;
+            box-shadow: 16px 16px 0 var(--manga-red);
+            padding: 50px;
+            border-radius: 30px;
+            transform: rotate(-2deg);
+            margin-top: 50px;
+            width: 90%;
+            font-family: 'Bangers', cursive;
+            font-size: 72px;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <div class="header">
-            <div class="title" id="mainPrompt">QUIZ 16 CARRÉS</div>
+        <div class="top-bar">
+            <div class="round-badge" id="counter">1 / 8</div>
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="logo-top" alt="Logo">
             <div class="current-points-box" id="pointsBox">
-                <div class="points-label">Score Possible</div>
+                <div class="points-label">SCORE</div>
                 <div class="points-value" id="scoreValue">5 PTS</div>
             </div>
         </div>
 
+        <!-- Titre dynamique du quiz (change selon promptText) -->
+        <div class="quiz-title-banner" id="mainPrompt">DEVINE L'IMAGE</div>
+
         <div class="image-area" id="imageContainer">
+            <div class="img-bg-blur" id="imgBgBlur"></div>
             <div class="grid-overlay" id="gridContainer"></div>
-            <img src="" id="charImage"> 
+            <img src="" id="charImage" alt="Quiz">
         </div>
 
         <div class="timer-wrapper">
@@ -56,52 +346,119 @@
 
         <div class="answer-zone">
             <div class="char-name" id="charName">???</div>
-            <div class="counter" id="counter">Chargement...</div>
+            <div class="anime-title" id="animeTitle"></div>
+        </div>
+
+        <!-- ANIMATION D'INTRO AU DÉBUT -->
+        <div class="overlay" id="introOverlay">
+            <div id="flyingIconsContainer"></div>
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" alt="Logo">
+        </div>
+
+        <!-- ÉCRAN DE FIN -->
+        <div class="overlay" id="endScreen" style="display:none; background: rgba(0,0,0,0.95);">
+            <img src="https://raw.githubusercontent.com/nanana57/tik/main/logo.png" class="intro-logo-heartbeat" style="width:300px;height:300px;" alt="Logo">
+            <div class="end-box">DONNE TON SCORE EN COMMENTAIRE ! 👇</div>
         </div>
     </div>
 
     <script>
-        window.quizData = [];
-        window.startQuiz = function() {
-            if (window.quizData && window.quizData.length > 0) {
-                playRound();
-            }
-        };
+        const database = __DONNEES_IA__;
+        window.quizFinished = false;
 
-        const STEP_TIME = 2000;     
-        const TOTAL_DURATION = 14000; 
+        const STEP_TIME = 1800; // Ouverture de cases toutes les 1.8s (10.8s d'ouverture + 2.6s de révélation)
+        const TOTAL_DURATION = 10800;
+        const REVEAL_DURATION = 2600;
+
         let currentRound = 0;
         let gridInterval = null;
 
         const img = document.getElementById('charImage');
+        const imgBgBlur = document.getElementById('imgBgBlur');
         const gridContainer = document.getElementById('gridContainer');
         const timerBar = document.getElementById('timerBar');
         const scoreValue = document.getElementById('scoreValue');
         const pointsBox = document.getElementById('pointsBox');
         const charName = document.getElementById('charName');
+        const animeTitle = document.getElementById('animeTitle');
         const counter = document.getElementById('counter');
         const mainPrompt = document.getElementById('mainPrompt');
 
+        const daIcons = [
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-2.png",
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-3.png",
+            "https://raw.githubusercontent.com/nanana57/tik/main/icon-4.png"
+        ];
+
+        // 1. Animation d'intro au chargement
+        window.onload = () => {
+            const container = document.getElementById('flyingIconsContainer');
+            for (let i = 0; i < 16; i++) {
+                const icon = document.createElement('img');
+                icon.src = daIcons[i % daIcons.length];
+                icon.className = 'flying-particle';
+                icon.style.setProperty('--tx', (Math.random() - 0.5) * 1400 + 'px');
+                icon.style.setProperty('--ty', (Math.random() - 0.5) * 1800 + 'px');
+                icon.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+                icon.style.width = '110px';
+                icon.style.animation = 'explodeOut 0.95s ease-out forwards';
+                container.appendChild(icon);
+            }
+            setTimeout(() => {
+                const intro = document.getElementById('introOverlay');
+                intro.classList.add('intro-fade-out');
+                setTimeout(() => {
+                    intro.style.display = 'none';
+                    playRound();
+                }, 150);
+            }, 850);
+        };
+
         function playRound() {
-            if (currentRound >= window.quizData.length) return;
-            const data = window.quizData[currentRound];
-            
+            if (!database || currentRound >= database.length) {
+                document.getElementById('endScreen').style.display = 'flex';
+                window.quizFinished = true;
+                return;
+            }
+
+            const data = database[currentRound];
             clearInterval(gridInterval);
+
             charName.classList.remove('visible');
+            animeTitle.classList.remove('visible');
             charName.innerText = "???";
-            mainPrompt.innerText = data.promptText || "DEVINE CE PERSONNAGE";
-            counter.innerText = `${currentRound + 1} / 8`;
-            
+            animeTitle.innerText = "";
+
+            // Le titre s'adapte dynamiquement au thème du quiz
+            mainPrompt.innerText = data.promptText || "DEVINE L'IMAGE";
+            counter.innerText = `${currentRound + 1} / ${database.length}`;
+
             updateScoreDisplay(5);
             timerBar.style.transition = 'none';
             timerBar.style.width = '100%';
+
+            resetGrid();
             gridContainer.style.opacity = '1';
 
-            img.src = data.imgUrl;
-            img.onload = () => {
-                resetGrid();
-                setTimeout(() => { startGridSequence(data); }, 500);
+            let sequenceStarted = false;
+            const launch = () => {
+                if (sequenceStarted) return;
+                sequenceStarted = true;
+                setTimeout(() => startGridSequence(data), 300);
             };
+
+            if (data.imgUrl) {
+                imgBgBlur.style.backgroundImage = `url('${data.imgUrl}')`;
+                img.onload = launch;
+                img.onerror = launch; // Ne bloque jamais si l'image échoue
+                img.src = data.imgUrl;
+                // Sécurité si l'image Base64 est déjà en cache
+                setTimeout(launch, 600);
+            } else {
+                imgBgBlur.style.backgroundImage = 'none';
+                img.src = '';
+                launch();
+            }
         }
 
         function resetGrid() {
@@ -110,76 +467,80 @@
                 let cell = document.createElement('div');
                 cell.className = 'grid-cell';
                 cell.id = `cell-${i}`;
+                cell.innerText = i + 1;
                 gridContainer.appendChild(cell);
             }
         }
 
         function startGridSequence(data) {
-            let availableIndices = Array.from({length: 16}, (_, i) => i);
+            let availableIndices = Array.from({ length: 16 }, (_, i) => i);
             availableIndices.sort(() => Math.random() - 0.5);
             let stepCount = 0;
 
+            void timerBar.offsetWidth;
             timerBar.style.transition = `width ${TOTAL_DURATION}ms linear`;
             timerBar.style.width = '0%';
 
+            // Ouvre 2 cases dès le départ (Score = 5 PTS)
             removeSquares(2, availableIndices);
 
             gridInterval = setInterval(() => {
-                stepCount++; 
-                if (availableIndices.length === 0) {
+                stepCount++;
+                if (availableIndices.length === 0 || stepCount >= 6) {
                     revealAnswer(data);
                     return;
                 }
 
-                let nextScore = 5 - stepCount;
-                if (nextScore < 1) nextScore = 1;
+                let nextScore = Math.max(1, 5 - stepCount);
                 updateScoreDisplay(nextScore);
 
-                let amountToRemove = (stepCount >= 5) ? 3 : 2;
+                // Ouvre 2 cases aux étapes 1, 2, 3 puis 3 cases aux étapes 4 et 5
+                let amountToRemove = (stepCount >= 4) ? 3 : 2;
                 removeSquares(amountToRemove, availableIndices);
             }, STEP_TIME);
         }
 
         function removeSquares(amount, indicesArray) {
-            for(let k=0; k < amount; k++) {
+            for (let k = 0; k < amount; k++) {
                 if (indicesArray.length > 0) {
                     let indexToRemove = indicesArray.pop();
                     let cell = document.getElementById(`cell-${indexToRemove}`);
-                    if(cell) cell.classList.add('revealed');
+                    if (cell) cell.classList.add('revealed');
                 }
             }
         }
 
         function updateScoreDisplay(points) {
             scoreValue.innerText = points + (points > 1 ? " PTS" : " PT");
-            const colors = { 5: "#00ff7f", 4: "#ccff00", 3: "#ffff00", 2: "#ffcc00", 1: "#ff0000" };
-            const color = colors[points] || "#ff0000";
-            
+            const colors = { 5: "#00ff7f", 4: "#ccff00", 3: "#ffde00", 2: "#ff9900", 1: "#ff2a00" };
+            const color = colors[points] || "#ff2a00";
             scoreValue.style.color = color;
             pointsBox.style.borderColor = color;
-            pointsBox.style.background = `rgba(${hexToRgb(color)}, 0.1)`;
-        }
-
-        function hexToRgb(hex) {
-            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-            return `${r}, ${g}, ${b}`;
         }
 
         function revealAnswer(data) {
             clearInterval(gridInterval);
             document.querySelectorAll('.grid-cell').forEach(cell => cell.classList.add('revealed'));
 
-            scoreValue.innerText = "Fini !";
-            scoreValue.style.color = "#fff";
-            pointsBox.style.borderColor = "#fff";
+            if (data.isBait) {
+                scoreValue.innerText = "PIÈGE !";
+                charName.innerText = "DIS-LE EN COM ! 👇";
+                gridContainer.innerHTML = `<div style="grid-column:1/-1;grid-row:1/-1;background:#111;display:flex;align-items:center;justify-content:center;font-family:'Bangers';font-size:110px;color:#ffde00;text-align:center;padding:40px;">TU L'AS RECONNU ? 🤔</div>`;
+            } else {
+                scoreValue.innerText = "FINI !";
+                charName.innerText = data.name || "MYSTÈRE";
+                if (data.anime) {
+                    animeTitle.innerText = data.anime;
+                    animeTitle.classList.add('visible');
+                }
+            }
 
-            charName.innerText = data.name;
             charName.classList.add('visible');
 
             setTimeout(() => {
                 currentRound++;
                 playRound();
-            }, 3000);
+            }, REVEAL_DURATION);
         }
     </script>
 </body>
